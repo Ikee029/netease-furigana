@@ -16,6 +16,7 @@ const fs       = require('fs');
 
 const app  = express();
 const PORT = process.env.PORT || 8787;
+const PYTHON = (() => { try { execSync('python --version', {stdio:'ignore'}); return 'python'; } catch(e) { return 'python3'; } })();
 
 app.use(express.json());
 app.use(express.static(__dirname));
@@ -39,7 +40,7 @@ function httpsGet(url) {
 function getFurigana(lines) {
     const input = JSON.stringify({ texts: lines });
     try {
-        const result = execSync('python furigana.py', {
+        const result = execSync(`${PYTHON} furigana.py`, {
             input,
             encoding: 'utf-8',
             env: { ...process.env, PYTHONUTF8: '1', PYTHONIOENCODING: 'utf-8' },
