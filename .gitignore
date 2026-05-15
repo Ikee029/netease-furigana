@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Test files (exclude from deployment)
+test_*.js
+test_*.py
+debug*.txt
+debug*.bin
+compare_result.txt
+test_result.txt
+test_compare_result.txt
+test_fix_result.txt
+
+# OS files
+Thumbs.db

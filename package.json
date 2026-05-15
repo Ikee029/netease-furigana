@@ -1,0 +1,12 @@
+{
+  "name": "netease-furigana",
+  "version": "1.0.0",
+  "description": "网易云日语歌词注音 · 上行注音下行翻译",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

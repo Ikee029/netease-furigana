@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日语歌词注音 | NetEase Music</title>
+<style>
+    * { margin:0; padding:0; box-sizing: border-box; }
+    body {
+        font-family: -apple-system, "Microsoft YaHei", "Hiragino Sans", "Noto Sans JP", sans-serif;
+        background: linear-gradient(135deg, #0f0c29 0%, #1a1a2e 40%, #16213e 100%);
+        color: #eee;
+        min-height: 100vh;
+    }
+
+    /* ── 顶栏 ── */
+    .header {
+        background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+        padding: 18px 20px 14px;
+        text-align: center;
+        border-bottom: 1px solid rgba(233,69,96,0.3);
+        position: sticky; top: 0; z-index: 10;
+        backdrop-filter: blur(10px);
+    }
+    .header h1 {
+        font-size: 22px; font-weight: 700; color: #e94560;
+        letter-spacing: 2px;
+    }
+    .header .sub { font-size: 12px; color: #888; margin-top: 4px; }
+    .header .byline {
+        font-size: 11px; color: #555; margin-top: 6px;
+        letter-spacing: 1px;
+    }
+    .header .byline span { color: #e94560; font-weight: 600; }
+
+    /* ── 搜索栏 ── */
+    .search-box {
+        width: 100%; max-width: 600px; margin: 24px auto 0;
+        padding: 0 16px;
+    }
+    .search-box input {
+        width: 100%; padding: 12px 18px; border-radius: 24px;
+        border: 1px solid #0f3460; background: rgba(22,33,62,0.8);
+        color: #fff; font-size: 15px; outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .search-box input::placeholder { color: #555; }
+    .search-box input:focus {
+        border-color: #e94560;
+        box-shadow: 0 0 0 3px rgba(233,69,96,0.15);
+    }
+
+    /* ── 容器 ── */
+    .container { max-width: 800px; margin: 0 auto; padding: 0 20px 60px; }
+
+    /* ── 搜索结果 ── */
+    .result-item {
+        display: flex; align-items: center; padding: 14px 18px;
+        border-bottom: 1px solid #2a2a4a; cursor: pointer;
+        border-radius: 0; transition: background .15s;
+    }
+    .result-item:first-child { border-radius: 8px 8px 0 0; }
+    .result-item:last-child  { border-radius: 0 0 8px 8px; border-bottom: none; }
+    .result-item:hover { background: rgba(233,69,96,0.08); }
+    .result-item .cover {
+        width: 50px; height: 50px; border-radius: 8px;
+        background: linear-gradient(135deg, #0f3460, #16213e);
+        flex-shrink: 0; margin-right: 16px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; color: #e94560;
+    }
+    .result-item .info { flex: 1; min-width: 0; }
+    .result-item .name {
+        font-size: 15px; font-weight: 600;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .result-item .meta { font-size: 12px; color: #666; margin-top: 3px; }
+    .status { text-align: center; padding: 60px 20px; color: #555; font-size: 14px; }
+    .error  { text-align: center; padding: 40px; color: #e94560; font-size: 14px; }
+
+    /* ── 歌词面板 ── */
+    .lyrics-panel { margin-top: 24px; }
+    .lyrics-panel .song-info {
+        text-align: center; padding: 24px 20px 18px;
+        border-bottom: 1px solid #2a2a4a;
+        background: rgba(22,33,62,0.5);
+        border-radius: 12px 12px 0 0;
+    }
+    .lyrics-panel .song-name { font-size: 24px; font-weight: 700; }
+    .lyrics-panel .song-artist { font-size: 14px; color: #e94560; margin-top: 6px; }
+    .lyrics-actions {
+        display: flex; justify-content: center; gap: 12px;
+        margin-top: 14px; flex-wrap: wrap;
+    }
+    .lyrics-actions .back-btn {
+        font-size: 13px; color: #666; cursor: pointer;
+        background: none; border: 1px solid #2a2a4a; border-radius: 6px;
+        padding: 6px 14px; transition: .2s;
+    }
+    .lyrics-actions .back-btn:hover { color: #e94560; border-color: #e94560; }
+
+    .copy-btn {
+        font-size: 13px; padding: 6px 16px; border-radius: 6px;
+        border: 1px solid #4a90d9; background: rgba(74,144,217,0.08);
+        color: #4a90d9; cursor: pointer; transition: .2s;
+    }
+    .copy-btn:hover { background: rgba(74,144,217,0.2); }
+    .copy-btn.copied { border-color: #4caf50; color: #4caf50; background: rgba(76,175,80,0.12); }
+
+    /* ── 歌词行 ── */
+    .lyric-line {
+        margin: 8px 0; line-height: 1.7; padding: 6px 20px;
+        border-bottom: 1px solid rgba(42,42,74,0.5);
+    }
+    .lyric-line:last-child { border-bottom: none; }
+    .lyric-line .ln-read {
+        font-size: 12px; color: #555; letter-spacing: 1.5px;
+        min-height: 1.2em;
+    }
+    .lyric-line .ln-jp {
+        font-size: 18px; color: #f0f0f0; font-weight: 500;
+        margin: 2px 0;
+    }
+    .lyric-line ruby { ruby-align: center; }
+    .lyric-line rt   { font-size: 0.45em; color: #888; }
+    .lyric-line rp   { display: none; }
+    .lyric-line .ln-cn {
+        font-size: 13px; color: #4a90d9; min-height: 1.2em;
+    }
+
+    /* ── 加载 ── */
+    .loading { text-align: center; padding: 80px 20px; }
+    .spinner {
+        width: 36px; height: 36px; border: 3px solid #2a2a4a;
+        border-top-color: #e94560; border-radius: 50%;
+        animation: spin .8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    .toast {
+        position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+        background: #4caf50; color: #fff; padding: 10px 28px;
+        border-radius: 8px; font-size: 14px; z-index: 100;
+        pointer-events: none; opacity: 0; transition: opacity .25s;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .toast.show { opacity: 1; }
+
+    /* ── 页脚联系信息 ── */
+    .footer {
+        text-align: center; padding: 40px 20px 30px;
+        color: #444; font-size: 12px;
+    }
+    .footer a { color: #e94560; text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    /* ── 响应式 ── */
+    @media (max-width: 500px) {
+        .header h1 { font-size: 18px; }
+        .lyric-line .ln-jp { font-size: 16px; }
+        .lyric-line .ln-cn { font-size: 12px; }
+        .lyric-line { padding: 6px 12px; }
+    }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🎵 日语歌词注音</h1>
+    <div class="sub">上行注音 · 下行翻译</div>
+    <div class="byline">By <span>Ikee</span></div>
+</div>
+
+<div class="search-box">
+    <input type="text" id="searchInput" placeholder="搜索日语歌曲（歌手名 / 歌名）..." autofocus>
+</div>
+
+<div id="app" class="container">
+    <div class="status">🔍 输入关键词搜索</div>
+</div>
+
+<div class="footer">
+    如有问题请联系：<a href="mailto:ikeewyhagd@qq.com">ikeewyhagd@qq.com</a>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const toast = $('#toast');
+let currentQuery = '';
+let currentLyrics = [];
+
+function showToast(msg) {
+    toast.textContent = msg;
+    toast.className = 'toast show';
+    setTimeout(() => toast.className = 'toast', 2000);
+}
+
+// ── 搜索 ──
+$('#searchInput').addEventListener('input', function () {
+    const q = this.value.trim();
+    if (q.length < 1) {
+        app.innerHTML = '<div class="status">🔍 输入关键词搜索</div>';
+        return;
+    }
+    if (q === currentQuery) return;
+    currentQuery = q;
+    clearTimeout(this._timer);
+    this._timer = setTimeout(() => doSearch(q), 400);
+});
+
+async function doSearch(q) {
+    app.innerHTML = '<div class="loading"><div class="spinner"></div>搜索中...</div>';
+    try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (data.code !== 200 || !data.result.songs.length) {
+            app.innerHTML = '<div class="status">😕 没有找到相关歌曲</div>';
+            return;
+        }
+        renderResults(data.result.songs);
+    } catch (e) {
+        app.innerHTML = `<div class="error">网络错误: ${e.message}</div>`;
+    }
+}
+
+function renderResults(songs) {
+    app.innerHTML = songs.map(s => `
+        <div class="result-item" onclick="loadLyrics(${s.id},'${escHtml(s.name)}','${escHtml(s.artist)}')">
+            <div class="cover">♪</div>
+            <div class="info">
+                <div class="name">${escHtml(s.name)}</div>
+                <div class="meta">${escHtml(s.artist)} · ${escHtml(s.album)}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function escHtml(s) {
+    return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── 歌词加载 ──
+async function loadLyrics(id, name, artist) {
+    app.innerHTML = '<div class="loading"><div class="spinner"></div>加载歌词中...</div>';
+    try {
+        const res = await fetch(`/api/lyrics/${id}`);
+        const data = await res.json();
+        if (data.code !== 200) {
+            app.innerHTML = '<div class="error">获取歌词失败</div>';
+            return;
+        }
+        currentLyrics = data.result.lines;
+        renderLyrics(currentLyrics, name, artist);
+    } catch (e) {
+        app.innerHTML = `<div class="error">加载失败: ${e.message}</div>`;
+    }
+}
+
+function renderLyrics(lines, name, artist) {
+    let html = '<div class="lyrics-panel">';
+    html += '<div class="song-info">';
+    html += `<div class="song-name">${escHtml(name)}</div>`;
+    html += `<div class="song-artist">${escHtml(artist)}</div>`;
+    html += '<div class="lyrics-actions">';
+    html += `<button class="back-btn" onclick="doSearch('${currentQuery}')">← 返回搜索结果</button>`;
+    html += '<button class="copy-btn" onclick="copyLyrics(this)">📋 一键复制歌词</button>';
+    html += '</div></div>';
+
+    for (const l of lines) {
+        if (!l.jp && !l.cn) continue;
+        html += '<div class="lyric-line">';
+        if (l.reading) {
+            html += `<div class="ln-read">${escHtml(l.reading)}</div>`;
+        } else {
+            html += '<div class="ln-read"></div>';
+        }
+        if (l.jp_ruby) {
+            html += `<div class="ln-jp">${l.jp_ruby}</div>`;
+        } else if (l.jp) {
+            html += `<div class="ln-jp">${escHtml(l.jp)}</div>`;
+        } else {
+            html += '<div class="ln-jp"></div>';
+        }
+        if (l.cn) {
+            html += `<div class="ln-cn">${escHtml(l.cn)}</div>`;
+        }
+        html += '</div>';
+    }
+    html += '</div>';
+    app.innerHTML = html;
+}
+
+// ── 一键复制歌词 ──
+function copyLyrics(btn) {
+    let text = '';
+    for (const l of currentLyrics) {
+        if (!l.jp_plain && !l.cn) continue;
+        if (l.jp_plain) text += l.jp_plain + '\n';
+        if (l.reading)  text += l.reading + '\n';
+        if (l.cn)       text += l.cn + '\n';
+        text += '\n';
+    }
+    navigator.clipboard.writeText(text.trim()).then(() => {
+        btn.textContent = '✅ 已复制';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = '📋 一键复制歌词';
+            btn.classList.remove('copied');
+        }, 1500);
+    }).catch(() => showToast('复制失败，请重试'));
+}
+</script>
+
+</body>
+</html>
