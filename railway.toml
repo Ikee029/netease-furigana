@@ -1,0 +1,6 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pip install -r requirements.txt && npm install"
+
+[deploy]
+startCommand = "python -c 'import janome; print(\"janome OK\")' && node server.js"
