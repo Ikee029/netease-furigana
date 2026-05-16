@@ -245,15 +245,12 @@ const HIRA = {
 
 function toRomaji(text) {
     if (!text) return '';
-    // Normalize: strip spaces/extra punctuation
     let s = text.replace(/\s+/g, ' ').trim();
-    let out = '';
+    let units = [];
     let i = 0;
     while (i < s.length) {
-        // Try っ + next = geminate consonant
         if (s[i] === '\u3063' && i + 1 < s.length) {
             let n = s[i+1];
-            // Try combo first
             let combo = n;
             if (i + 2 < s.length) {
                 let c2 = n + s[i+2];
@@ -261,44 +258,38 @@ function toRomaji(text) {
             }
             let r = HIRA[combo] || HIRA[n];
             if (r) {
-                // For 'chi' → 'tchi', 'tsu' → 'ttsu' etc.
-                out += r[0] + r;
+                units.push(r[0] + r);
                 i += (combo.length > 1 ? 3 : 2);
                 continue;
             }
             i++; continue;
         }
-        // Try 2-char combo
         if (i + 1 < s.length) {
             let duo = s[i] + s[i+1];
-            if (HIRA[duo]) { out += HIRA[duo]; i += 2; continue; }
+            if (HIRA[duo]) { units.push(HIRA[duo]); i += 2; continue; }
         }
-        // Single char
         let ch = s[i];
         if (ch === '\u3093') {
-            // ん rules
             let nxt = s[i+1];
             if (nxt && '\u3042\u3044\u3046\u3048\u304a\u3084\u3086\u3088'.includes(nxt)) {
-                out += "n'";
+                units.push("n'");
             } else {
-                out += 'n';
+                units.push('n');
             }
         } else if (ch === '\u30fc') {
-            // long vowel mark: extend previous vowel
-            if (out.length > 0) {
-                let last = out[out.length-1];
-                if ('aiueo'.includes(last)) out += last;
+            if (units.length > 0) {
+                let last = units[units.length-1];
+                let v = last[last.length-1];
+                if ('aiueo'.includes(v)) units[units.length-1] += v;
             }
         } else if (ch === '\u3063') {
-            // lone small tsu at end: skip
+            // skip
         } else if (HIRA[ch]) {
-            out += HIRA[ch];
-        } else {
-            out += ch; // punctuation, space, etc.
+            units.push(HIRA[ch]);
         }
         i++;
     }
-    return out;
+    return units.join(' ');
 }
 
 // ── 搜索 ──
