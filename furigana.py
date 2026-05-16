@@ -49,6 +49,14 @@ def generate_furigana(text: str) -> dict:
         surface = token.surface
         reading = token.reading  # 片假名
 
+        # 修正助词读音：は(ha)→wa, へ(he)→e
+        pos = token.part_of_speech
+        if pos and pos.startswith('助詞'):
+            if surface == 'は':
+                reading = 'ワ'
+            elif surface == 'へ':
+                reading = 'エ'
+
         # 如果 surface 和 reading 一样（纯假名），或者 reading 为空
         if not reading or surface == reading:
             reading_parts.append(surface)
