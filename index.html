@@ -163,6 +163,32 @@
     .footer a { color: #e94560; text-decoration: none; }
     .footer a:hover { text-decoration: underline; }
 
+    /* ── 分享区域 ── */
+    .share-section {
+        text-align: center;
+        padding: 40px 20px 30px;
+        margin-top: 20px;
+    }
+    .share-qr {
+        display: inline-block;
+        background: white;
+        padding: 16px;
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(233,69,96,0.15);
+    }
+    .share-qr img {
+        display: block;
+        width: 180px;
+        height: 180px;
+    }
+    .share-label {
+        margin-top: 14px;
+        font-size: 14px;
+        color: #e94560;
+        font-weight: 600;
+        letter-spacing: 2px;
+    }
+
     /* ── 响应式 ── */
     @media (max-width: 500px) {
         .header h1 { font-size: 18px; }
@@ -186,6 +212,13 @@
 
 <div id="app" class="container">
     <div class="status">🔍 输入关键词搜索</div>
+</div>
+
+<div class="share-section">
+    <div class="share-qr">
+        <img src="/qr.png" alt="QR码" width="180" height="180">
+    </div>
+    <div class="share-label">欢迎分享</div>
 </div>
 
 <div class="footer">
