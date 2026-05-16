@@ -107,6 +107,14 @@
     .copy-btn:hover { background: rgba(74,144,217,0.2); }
     .copy-btn.copied { border-color: #4caf50; color: #4caf50; background: rgba(76,175,80,0.12); }
 
+    .roma-btn {
+        font-size: 13px; padding: 6px 16px; border-radius: 6px;
+        border: 1px solid #e94560; background: rgba(233,69,96,0.08);
+        color: #e94560; cursor: pointer; transition: .2s;
+    }
+    .roma-btn:hover { background: rgba(233,69,96,0.18); }
+    .roma-btn.active { background: rgba(233,69,96,0.2); border-color: #e94560; }
+
     /* ── 歌词行 ── */
     .lyric-line {
         margin: 8px 0; line-height: 1.7; padding: 6px 20px;
@@ -192,11 +200,105 @@ const app = $('#app');
 const toast = $('#toast');
 let currentQuery = '';
 let currentLyrics = [];
+let showRoma = false;
 
 function showToast(msg) {
     toast.textContent = msg;
     toast.className = 'toast show';
     setTimeout(() => toast.className = 'toast', 2000);
+}
+
+// ── 罗马音转换 ──
+const HIRA = {
+'\u3042':'a','\u3044':'i','\u3046':'u','\u3048':'e','\u304a':'o',
+'\u304b':'ka','\u304d':'ki','\u304f':'ku','\u3051':'ke','\u3053':'ko',
+'\u3055':'sa','\u3057':'shi','\u3059':'su','\u305b':'se','\u305d':'so',
+'\u305f':'ta','\u3061':'chi','\u3064':'tsu','\u3066':'te','\u3068':'to',
+'\u306a':'na','\u306b':'ni','\u306c':'nu','\u306d':'ne','\u306e':'no',
+'\u306f':'ha','\u3072':'hi','\u3075':'fu','\u3078':'he','\u307b':'ho',
+'\u307e':'ma','\u307f':'mi','\u3080':'mu','\u3081':'me','\u3082':'mo',
+'\u3084':'ya','\u3086':'yu','\u3088':'yo',
+'\u3089':'ra','\u308a':'ri','\u308b':'ru','\u308c':'re','\u308d':'ro',
+'\u308f':'wa','\u3092':'wo','\u3093':'n',
+'\u304c':'ga','\u304e':'gi','\u3050':'gu','\u3052':'ge','\u3054':'go',
+'\u3056':'za','\u3058':'ji','\u305a':'zu','\u305c':'ze','\u305e':'zo',
+'\u3060':'da','\u3062':'ji','\u3065':'zu','\u3067':'de','\u3069':'do',
+'\u3070':'ba','\u3073':'bi','\u3076':'bu','\u3079':'be','\u307c':'bo',
+'\u3071':'pa','\u3074':'pi','\u3077':'pu','\u307a':'pe','\u307d':'po',
+/* small kana */
+'\u3041':'a','\u3043':'i','\u3045':'u','\u3047':'e','\u3049':'o',
+'\u3083':'ya','\u3085':'yu','\u3087':'yo','\u3063':'',
+/* combo */
+'\u304d\u3083':'kya','\u304d\u3085':'kyu','\u304d\u3087':'kyo',
+'\u3057\u3083':'sha','\u3057\u3085':'shu','\u3057\u3087':'sho',
+'\u3061\u3083':'cha','\u3061\u3085':'chu','\u3061\u3087':'cho',
+'\u306b\u3083':'nya','\u306b\u3085':'nyu','\u306b\u3087':'nyo',
+'\u3072\u3083':'hya','\u3072\u3085':'hyu','\u3072\u3087':'hyo',
+'\u307f\u3083':'mya','\u307f\u3085':'myu','\u307f\u3087':'myo',
+'\u308a\u3083':'rya','\u308a\u3085':'ryu','\u308a\u3087':'ryo',
+'\u304e\u3083':'gya','\u304e\u3085':'gyu','\u304e\u3087':'gyo',
+'\u3058\u3083':'ja','\u3058\u3085':'ju','\u3058\u3087':'jo',
+'\u3062\u3083':'ja','\u3062\u3085':'ju','\u3062\u3087':'jo',
+'\u3073\u3083':'bya','\u3073\u3085':'byu','\u3073\u3087':'byo',
+'\u3074\u3083':'pya','\u3074\u3085':'pyu','\u3074\u3087':'pyo',
+};
+
+function toRomaji(text) {
+    if (!text) return '';
+    // Normalize: strip spaces/extra punctuation
+    let s = text.replace(/\s+/g, ' ').trim();
+    let out = '';
+    let i = 0;
+    while (i < s.length) {
+        // Try っ + next = geminate consonant
+        if (s[i] === '\u3063' && i + 1 < s.length) {
+            let n = s[i+1];
+            // Try combo first
+            let combo = n;
+            if (i + 2 < s.length) {
+                let c2 = n + s[i+2];
+                if (HIRA[c2]) combo = c2;
+            }
+            let r = HIRA[combo] || HIRA[n];
+            if (r) {
+                // For 'chi' → 'tchi', 'tsu' → 'ttsu' etc.
+                out += r[0] + r;
+                i += (combo.length > 1 ? 3 : 2);
+                continue;
+            }
+            i++; continue;
+        }
+        // Try 2-char combo
+        if (i + 1 < s.length) {
+            let duo = s[i] + s[i+1];
+            if (HIRA[duo]) { out += HIRA[duo]; i += 2; continue; }
+        }
+        // Single char
+        let ch = s[i];
+        if (ch === '\u3093') {
+            // ん rules
+            let nxt = s[i+1];
+            if (nxt && '\u3042\u3044\u3046\u3048\u304a\u3084\u3086\u3088'.includes(nxt)) {
+                out += "n'";
+            } else {
+                out += 'n';
+            }
+        } else if (ch === '\u30fc') {
+            // long vowel mark: extend previous vowel
+            if (out.length > 0) {
+                let last = out[out.length-1];
+                if ('aiueo'.includes(last)) out += last;
+            }
+        } else if (ch === '\u3063') {
+            // lone small tsu at end: skip
+        } else if (HIRA[ch]) {
+            out += HIRA[ch];
+        } else {
+            out += ch; // punctuation, space, etc.
+        }
+        i++;
+    }
+    return out;
 }
 
 // ── 搜索 ──
@@ -240,7 +342,7 @@ function renderResults(songs) {
 }
 
 function escHtml(s) {
-    return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 // ── 歌词加载 ──
@@ -254,6 +356,10 @@ async function loadLyrics(id, name, artist) {
             return;
         }
         currentLyrics = data.result.lines;
+        // Pre-compute romaji for each line
+        for (const l of currentLyrics) {
+            l.romaji = l.reading ? toRomaji(l.reading) : '';
+        }
         renderLyrics(currentLyrics, name, artist);
     } catch (e) {
         app.innerHTML = `<div class="error">加载失败: ${e.message}</div>`;
@@ -268,13 +374,15 @@ function renderLyrics(lines, name, artist) {
     html += '<div class="lyrics-actions">';
     html += `<button class="back-btn" onclick="doSearch('${currentQuery}')">← 返回搜索结果</button>`;
     html += '<button class="copy-btn" onclick="copyLyrics(this)">📋 一键复制歌词</button>';
+    html += `<button class="roma-btn${showRoma?' active':''}" id="romaBtn" onclick="toggleRoma()">${showRoma ? 'あ abc ✓' : 'あ → abc'}</button>`;
     html += '</div></div>';
 
     for (const l of lines) {
         if (!l.jp && !l.cn) continue;
         html += '<div class="lyric-line">';
-        if (l.reading) {
-            html += `<div class="ln-read">${escHtml(l.reading)}</div>`;
+        const displayReading = showRoma && l.romaji ? l.romaji : (l.reading || '');
+        if (displayReading) {
+            html += `<div class="ln-read">${escHtml(displayReading)}</div>`;
         } else {
             html += '<div class="ln-read"></div>';
         }
@@ -294,14 +402,21 @@ function renderLyrics(lines, name, artist) {
     app.innerHTML = html;
 }
 
+// ── 注音模式切换 ──
+function toggleRoma() {
+    showRoma = !showRoma;
+    renderLyrics(currentLyrics, '', '');
+}
+
 // ── 一键复制歌词 ──
 function copyLyrics(btn) {
     let text = '';
     for (const l of currentLyrics) {
         if (!l.jp_plain && !l.cn) continue;
         if (l.jp_plain) text += l.jp_plain + '\n';
-        if (l.reading)  text += l.reading + '\n';
-        if (l.cn)       text += l.cn + '\n';
+        if (showRoma && l.romaji) text += l.romaji + '\n';
+        else if (l.reading)   text += l.reading + '\n';
+        if (l.cn)        text += l.cn + '\n';
         text += '\n';
     }
     navigator.clipboard.writeText(text.trim()).then(() => {
